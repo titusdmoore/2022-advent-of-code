@@ -7,56 +7,44 @@ pub fn main() !void {
     var buf: [50]u8 = undefined;
     var buf_reader = std.io.bufferedReader(path.reader());
     var in_stream = buf_reader.reader();
+    var total_matches: u64 = 0;
 
     while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
-        var half = line.len / 2;
-        std.debug.print("{d}\n", .{line.len});
-        std.debug.print("{d}\n", .{half});
-        var left: []u8 = line[0..half];
-        var right: []u8 = sort(line[half..]);
+        var index: u8 = 0;
+        var allocator = std.heap.page_allocator;
+        var right = try allocator.alloc(u8, line.len / 2);
+        defer allocator.free(right);
 
-        std.debug.print("{s}\n", .{line});
-        std.debug.print("{s}\n", .{left});
-        std.debug.print("{s}", .{right});
+        line: while (index < line.len) {
+            if (index < (line.len / 2)) {
+                right[index] = line[index];
+            } else {
+                for (right) |item| {
+                    if (item == line[index]) {
+                        total_matches += calc_prio_value(item);
+                        break :line;
+                    }
+                }
+            }
 
-        std.debug.print("\n", .{});
-    }
-}
-
-pub fn sort(arr: []u8) []u8 {
-    var prev: u8 = 0;
-    var i: u8 = 0;
-
-    while (i < arr.len) {
-        // 65 - 90? - needs (- 64)
-        // 97 - 122 - needs (- 96)
-        var workingPrev: u8 = toStandardChar(arr[prev]);
-        var workingI: u8 = toStandardChar(arr[i]);
-
-        if (workingPrev > workingI) {
-            var holding = arr[i];
-            arr[i] = arr[prev];
-            arr[prev] = holding;
-            prev = i;
+            index += 1;
         }
-
-        i += 1;
     }
 
-    return arr;
+    std.debug.print("Total matches: {}\n", .{total_matches});
 }
 
-pub fn toStandardChar(ch: u8) u8 {
-    return switch (ch) {
-        65...90 => ch - 64,
+pub fn calc_prio_value(ch: u8) u8 {
+    std.debug.print("ch: {c}, {d}\n", .{ ch, ch });
+    var prio = switch (ch) {
+        65...90 => ch - 38,
         97...122 => ch - 96,
-        else => ch,
+        else => 0,
     };
-}
+    std.debug.print("prio: {d}\n", .{prio});
 
-// struct Vec {
-//
-// }
+    return prio;
+}
 
 test "simple test" {
     var list = std.ArrayList(i32).init(std.testing.allocator);
