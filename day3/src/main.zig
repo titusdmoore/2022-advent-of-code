@@ -8,6 +8,7 @@ pub fn main() !void {
     var buf_reader = std.io.bufferedReader(path.reader());
     var in_stream = buf_reader.reader();
     var total_matches: u64 = 0;
+    var three_ch: u8 = null;
 
     while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
         var index: u8 = 0;
